@@ -21,7 +21,7 @@
 
 * **Save current text as template** - Overwrites the default template with the current text. Allows you to save common modifications you make to the template.
 
-* **Text size** - Changes the text size of the entire program
+* **Font size** - Changes the text size of the entire program
 
 * **Date format** - Changes the format used by the Insert Date command
 

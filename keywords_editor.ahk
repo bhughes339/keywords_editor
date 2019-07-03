@@ -21,6 +21,9 @@ global settingsFile := RegexReplace(A_ScriptName, "\.[^.]+$", "") ".ini"
 global savedFile := A_ScriptDir . "/~saved_keywords.txt"
 global fSizes := {10: 7, 11: 8, 12: 9, 14: 10}
 global validDateFormats := ["dd MMM yyyy", "MMM dd, yyyy", "MM/dd/yyyy", "yyyy/MM/dd"]
+global fontSize
+global mnemonic
+global dateFormat
 global templates := {}
 tempText =
 (
@@ -87,12 +90,8 @@ Peer Reviewer: List your questions/concerns with their resolutions.
 )
 templates["Peer Review"] := tempText
 
-
-; Set default settings, then read INI file
-global fontSize := 12
-global mnemonic
-global dateFormat := "dd MMM yyyy"
 global templateText := templates["Keywords"]
+
 readSettings()
 
 Gosub InitGui
@@ -230,7 +229,7 @@ Return
 
 
 SetTemplate:
-newText := RegExReplace(Edit_GetText(hEdit), "`r`n", "\n")
+newText := RegExReplace(Edit_GetText(hEdit), "`r*`n", "\n")
 IniWrite, %newText%, %settingsFile%, Settings, template
 readSettings()
 Return
@@ -283,21 +282,18 @@ Return
 ; =========
 
 readSettings() {
-    IniRead, mnemonic, %settingsFile%, Settings, mnemonic, %A_Space%
-    mnemonic := SubStr(mnemonic, 1, 4)
+    ; Read from keywords_editor.ini and set default settings
+    IniRead, iniMnemonic, %settingsFile%, Settings, mnemonic, %A_Space%
+    mnemonic := SubStr(iniMnemonic, 1, 4)
     ;
-    IniRead, tempFontSize, %settingsFile%, Settings, fontsize, 12
-    if (fSizes[tempFontSize]) {
-        fontSize := tempFontSize
-    }
+    IniRead, iniFontSize, %settingsFile%, Settings, fontsize, %A_Space%
+    fontSize := (fSizes[iniFontSize]) ? iniFontSize : 12
     ;
-    IniRead, tempDateFormat, %settingsFile%, Settings, dateformat, dd MMM yyyy
-    if (HasVal(validDateFormats, tempDateFormat)) {
-        dateFormat := tempDateFormat
-    }
+    IniRead, iniDateFormat, %settingsFile%, Settings, dateformat, %A_Space%
+    dateFormat := (HasVal(validDateFormats, iniDateFormat)) ? iniDateFormat : "dd MMM yyyy"
     ;
-    IniRead, tempTemplateText, %settingsFile%, Settings, template, %templateText%
-    templateText := RegExReplace(tempTemplateText, "\\n", "`r`n")
+    IniRead, iniTemplateText, %settingsFile%, Settings, template, %A_Space%
+    templates["Keywords"] := (iniTemplateText) ? RegExReplace(iniTemplateText, "\\n", "`r`n") : templateText
 }
 
 
