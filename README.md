@@ -5,7 +5,7 @@
 * **Initialize with Keywords Template** - Replace the current text with the most recent International group Keywords template as defined in the AMS canned text.
   * Other commonly-used templates are available from the **File > Load template** menu. If you have a suggestion for a template that you think should be added, let me know.
   
-**Custom templates** - Select **Save current text as template** to create a new template which can be loaded from the **File > Load template** menu.
+* **Custom templates** - Select **Save current text as template** to create a new template which can be loaded from the **File > Load template** menu.
 
 * **Insert Date** - Insert the current date at the cursor. Setting your mnemonic in the menu will append it to the date.
   * Shortcut: <kbd>Ctrl</kbd>+<kbd>D</kbd>
