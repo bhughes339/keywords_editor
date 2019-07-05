@@ -24,6 +24,7 @@ global validDateFormats := ["dd MMM yyyy", "MMM dd, yyyy", "MM/dd/yyyy", "yyyy/M
 global fontSize
 global mnemonic
 global dateFormat
+global defaultTemplateName := "Intl Group: Keywords"
 global templates := {}
 tempText =
 (
@@ -64,7 +65,7 @@ Programs/Menus/ddeffs
  *To cut and paste into the keyword section, leave no blank lines
  *After loading the change to TEST, check against LIVE for Interactions
 )
-templates["Keywords"] := tempText
+templates["Intl Group: Keywords"] := tempText
 tempText =
 (
 Inhouse text contains program(s)/change#(s)/Dev ID(s)?
@@ -88,13 +89,12 @@ CORE customs item has been updated with this patch information?
 
 Peer Reviewer: List your questions/concerns with their resolutions.
 )
-templates["Peer Review"] := tempText
-
-global templateText := templates["Keywords"]
-
+templates["Intl Group: Peer Review"] := tempText
+global defaultTemplate := templates[defaultTemplateName]
+global userTemplates := {}
 readSettings()
-
 Gosub InitGui
+loadSavedKeywords(hEdit)
 Return
 
 ; =======
@@ -128,14 +128,15 @@ Gui, Font, s%fontSize% norm, Consolas
 
 ; -- File
 ; ---- :TemplateMenu
-for key, value in templates {
-    Menu, TemplateMenu, Add, %key%, TemplateMenuHandler
-}
-
+Gosub UpdateTemplateMenu
 Menu, FileMenu, Add, Load template, :TemplateMenu
+
 Menu, FileMenu, Add, Set mnemonic..., SetMnemonic
-Menu, FileMenu, Add, Save current text as template, SetTemplate
+Menu, FileMenu, Add, Save current text as template`tCtrl+S, SaveTemplate
 Menu, FileMenu, Add, Exit, MainGuiClose
+
+; -- Actions
+Menu, ActionMenu, Add, Insert date at cursor`tCtrl+D, AddDate
 
 ; -- View
 ; ---- :FontMenu
@@ -159,6 +160,7 @@ Menu, ViewMenu, Add, Date format, :DateFormatMenu
 
 ; -- Menu
 Menu, MenuBar, Add, File, :FileMenu
+Menu, MenuBar, Add, Actions, :ActionMenu
 Menu, MenuBar, Add, View, :ViewMenu
 Gui, Menu, MenuBar
 
@@ -178,20 +180,39 @@ Gui, Add, Text, % "xm w" getEditWidthScroll(80), ** Press Alt+Shift+V in the Key
 Gui, Show
 
 Hotkey, IfWinActive, ahk_id %MainHwnd%
-Hotkey, ^d, AddDate
-
-loadSavedKeywords(hEdit)
+; Add any program-specific hotkeys here
 
 Return
 
+; ===========
+; Subroutines
+; ===========
 
 TextSection:
 Edit_WriteFile(hEdit, savedFile)
 Return
 
 
+UpdateTemplateMenu:
+Menu, TemplateMenu, Add
+Menu, TemplateMenu, DeleteAll
+for key, value in templates {
+    Menu, TemplateMenu, Add, %key%, TemplateMenuHandler
+}
+Menu, TemplateMenu, Add
+for key, value in userTemplates {
+    Menu, TemplateMenu, Add, %key%, CustomTemplateMenuHandler
+}
+Return
+
+
 TemplateMenuHandler:
 replaceText(hEdit, templates[A_ThisMenuItem])
+Return
+
+
+CustomTemplateMenuHandler:
+replaceText(hEdit, userTemplates[A_ThisMenuItem])
 Return
 
 
@@ -228,10 +249,25 @@ if (ErrorLevel == 0) {
 Return
 
 
-SetTemplate:
-newText := RegExReplace(Edit_GetText(hEdit), "`r*`n", "\n")
-IniWrite, %newText%, %settingsFile%, Settings, template
-readSettings()
+SaveTemplate:
+Gui Main:+OwnDialogs
+InputBox, templateName, Save template, Enter a name for your template (maximum 30 characters):, , , 150
+if (ErrorLevel == 0) {
+    templateName := SubStr(templateName, 1, 30)
+    ; Replace "=" because of INI format
+    templateName := RegExReplace(templateName, "=", "_")
+    IniRead, existing, %settingsFile%, Templates, %templateName%, %A_Space%
+    if (existing || userTemplates[templateName]) {
+        MsgBox, 1, Template exists, There is already a template with this name. Overwrite?
+        IfMsgBox, Cancel
+            Return
+    }
+    editText := Edit_GetText(hEdit)
+    userTemplates[templateName] := editText
+    newText := RegExReplace(Edit_GetText(hEdit), "`r*`n", "\n")
+    IniWrite, %newText%, %settingsFile%, Templates, %templateName%
+}
+Gosub UpdateTemplateMenu
 Return
 
 
@@ -248,15 +284,13 @@ Return
 
 
 KeywordsTemplate:
-replaceText(hEdit, templates["Keywords"])
+replaceText(hEdit, templates[defaultTemplateName])
 Return
 
 
 AddDate:
 FormatTime, output,, %dateFormat%
-if (mnemonic) {
-    output := output " --" mnemonic
-}
+output := (mnemonic) ? (output " --" mnemonic) : output
 outLen := StrLen(output)
 Edit_GetSel(hEdit, cPos)
 rangeText := Edit_GetTextRange(hEdit, cPos, cPos+outLen)
@@ -292,8 +326,12 @@ readSettings() {
     IniRead, iniDateFormat, %settingsFile%, Settings, dateformat, %A_Space%
     dateFormat := (HasVal(validDateFormats, iniDateFormat)) ? iniDateFormat : "dd MMM yyyy"
     ;
-    IniRead, iniTemplateText, %settingsFile%, Settings, template, %A_Space%
-    templates["Keywords"] := (iniTemplateText) ? RegExReplace(iniTemplateText, "\\n", "`r`n") : templateText
+    IniRead, outSection, %settingsFile%, Templates
+    Loop, Parse, outSection, "`r`n"
+    {
+        line := StrSplit(A_LoopField, "=", "", 2)
+        userTemplates[line[1]] := RegExReplace(line[2], "\\n", "`n")
+    }
 }
 
 
@@ -304,9 +342,13 @@ getEditWidthScroll(chars) {
 
 getFormattedText(editHwnd) {
     Edit_FmtLines(editHwnd, True)
+    ; Strip whitespace from the end of the text
     fText := RegExReplace(Edit_GetText(editHwnd), "D)\s+$", "")
+    ; Format newlines to CRLF
     fText := RegExReplace(fText, "\r*\n", "`r`n")
+    ; Strip whitespace from end of each line
     fText := RegExReplace(fText, "m) +$", "")
+    ; Replace blank lines with a single space for Keywords pasting
     fText := RegExReplace(fText, "m)^$", " ")
     Edit_FmtLines(editHwnd, False)
     return fText
