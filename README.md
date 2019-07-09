@@ -9,6 +9,7 @@
 
 * **Insert Date** - Insert the current date at the cursor. Setting your mnemonic in the menu will append it to the date.
   * Shortcut: <kbd>Ctrl</kbd>+<kbd>D</kbd>
+  * **NOTE:** There must be enough whitespace to the right of the cursor to fit the date (and mnemonic if necessary)
 
 * **Copy to Clipboard** - Copies the text to the clipboard properly formatted for pasting into the Keywords section (blank lines appended with a space, etc)
 
@@ -35,3 +36,7 @@
 * Download [AutoHotkey](https://www.autohotkey.com) v1.1+ and install ([Link to current version download](https://www.autohotkey.com/download/ahk-install.exe))
 
 * Run `keywords_editor.ahk`
+
+---
+
+Special thanks to Ann Drysdale for testing and feature recommendations!

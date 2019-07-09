@@ -128,14 +128,17 @@ Gui, Font, s%fontSize% norm, Consolas
 
 ; -- File
 ; ---- :TemplateMenu
-Gosub UpdateTemplateMenu
-Menu, FileMenu, Add, Load template, :TemplateMenu
-
-Menu, FileMenu, Add, Set mnemonic..., SetMnemonic
+Gosub UpdateTemplateMenus
+Menu, FileMenu, Add, Load template, :LoadTemplateMenu
 Menu, FileMenu, Add, Save current text as template`tCtrl+S, SaveTemplate
+Menu, FileMenu, Add, Delete custom template, :DeleteTemplateMenu
+Menu, FileMenu, Add
+Menu, FileMenu, Add, Set mnemonic..., SetMnemonic
+Menu, FileMenu, Add
 Menu, FileMenu, Add, Exit, MainGuiClose
 
 ; -- Actions
+Menu, ActionMenu, Add, Copy Keywords to clipboard`tCtrl+Shift+C, CopyToClip
 Menu, ActionMenu, Add, Insert date at cursor`tCtrl+D, AddDate
 
 ; -- View
@@ -193,18 +196,24 @@ Edit_WriteFile(hEdit, savedFile)
 Return
 
 
-UpdateTemplateMenu:
-Menu, TemplateMenu, Add
-Menu, TemplateMenu, DeleteAll
+UpdateTemplateMenus:
+Menu, LoadTemplateMenu, Add
+Menu, LoadTemplateMenu, DeleteAll
+Menu, DeleteTemplateMenu, Add
+Menu, DeleteTemplateMenu, DeleteAll
 for key, value in templates {
-    Menu, TemplateMenu, Add, %key%, TemplateMenuHandler
+    Menu, LoadTemplateMenu, Add, %key%, TemplateMenuHandler
 }
-Menu, TemplateMenu, Add
+Menu, LoadTemplateMenu, Add
 for key, value in userTemplates {
-    Menu, TemplateMenu, Add, %key%, CustomTemplateMenuHandler
+    Menu, LoadTemplateMenu, Add, %key%, CustomTemplateMenuHandler
+    Menu, DeleteTemplateMenu, Add, %key%, DeleteTemplateHandler
 }
 Return
 
+; =============
+; Menu Handlers
+; =============
 
 TemplateMenuHandler:
 replaceText(hEdit, templates[A_ThisMenuItem])
@@ -213,6 +222,16 @@ Return
 
 CustomTemplateMenuHandler:
 replaceText(hEdit, userTemplates[A_ThisMenuItem])
+Return
+
+
+DeleteTemplateHandler:
+MsgBox, 1, Confirm deletion, Are you sure you want to delete template "%A_ThisMenuItem%"?
+IfMsgBox, Cancel
+    Return
+userTemplates.Delete(A_ThisMenuItem)
+IniDelete, %settingsFile%, Templates, %A_ThisMenuItem%
+Gosub UpdateTemplateMenus
 Return
 
 
@@ -267,7 +286,7 @@ if (ErrorLevel == 0) {
     newText := RegExReplace(Edit_GetText(hEdit), "`r*`n", "\n")
     IniWrite, %newText%, %settingsFile%, Templates, %templateName%
 }
-Gosub UpdateTemplateMenu
+Gosub UpdateTemplateMenus
 Return
 
 
