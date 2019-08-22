@@ -184,6 +184,8 @@ Gui, Show
 
 Hotkey, IfWinActive, ahk_id %MainHwnd%
 ; Add any program-specific hotkeys here
+^Backspace::Send ^+{Left}{Backspace}
+^+Backspace::Send +{Home}{Backspace}
 
 Return
 
