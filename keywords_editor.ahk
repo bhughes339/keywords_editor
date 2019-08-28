@@ -96,13 +96,7 @@ for key, value in fSizes {
 Menu, ViewMenu, Add, Font size, :FontMenu
 
 ; ---- :DateFormatMenu
-for index, value in validDateFormats {
-    tempFormat := todayToFormat(value)
-    Menu, DateFormatMenu, Add, %tempFormat%, DateFormatMenuHandler
-    if (value == dateFormat) {
-        Menu, DateFormatMenu, Check, %tempFormat%
-    }
-}
+GoSub UpdateDateMenu
 Menu, ViewMenu, Add, Date format, :DateFormatMenu
 
 ; -- Menu
@@ -190,15 +184,43 @@ GuiControl, Main:, TextSection, %TextSection%
 Return
 
 
-DateFormatMenuHandler:
+UpdateDateMenu:
+Menu, DateFormatMenu, Add
+Menu, DateFormatMenu, DeleteAll
 for index, value in validDateFormats {
-    Menu, DateFormatMenu, Uncheck, %index%&
+    tempFormat := todayToFormat(value)
+    Menu, DateFormatMenu, Add, %tempFormat%, DateFormatMenuHandler
+    if (value == dateFormat) {
+        Menu, DateFormatMenu, Check, %tempFormat%
+    }
 }
-dateFormat := validDateFormats[A_ThisMenuItemPos]
-IniWrite, %dateFormat%, %settingsFile%, Settings, dateFormat
-Menu, DateFormatMenu, Check, %A_ThisMenuItemPos%&
+Menu, DateFormatMenu, Add
+if (HasVal(validDateFormats, dateFormat)) {
+    Menu, DateFormatMenu, Add, Custom..., CustomDateFormat
+} else {
+    tempFormat := todayToFormat(dateFormat)
+    Menu, DateFormatMenu, Add, Custom: %tempFormat%, CustomDateFormat
+    Menu, DateFormatMenu, Check, Custom: %tempFormat%
+}
 Return
 
+
+DateFormatMenuHandler:
+dateFormat := validDateFormats[A_ThisMenuItemPos]
+IniWrite, %dateFormat%, %settingsFile%, Settings, dateFormat
+GoSub UpdateDateMenu
+Return
+
+
+CustomDateFormat:
+Gui Main:+OwnDialogs
+InputBox, tempFormat, Custom date format, Enter custom date format:, , , 150, , , , , %dateFormat%
+if (ErrorLevel == 0) {
+    dateFormat := tempFormat
+    IniWrite, %dateFormat%, %settingsFile%, Settings, dateFormat
+    GoSub UpdateDateMenu
+}
+Return
 
 SetMnemonic:
 Gui Main:+OwnDialogs
@@ -289,13 +311,12 @@ readSettings() {
     ; Read from keywords_editor.ini and set default settings
     IniRead, iniMnemonic, %settingsFile%, Settings, mnemonic, %A_Space%
     mnemonic := SubStr(iniMnemonic, 1, 4)
-    ;
+
     IniRead, iniFontSize, %settingsFile%, Settings, fontsize, %A_Space%
     fontSize := (fSizes[iniFontSize]) ? iniFontSize : 12
-    ;
-    IniRead, iniDateFormat, %settingsFile%, Settings, dateformat, %A_Space%
-    dateFormat := (HasVal(validDateFormats, iniDateFormat)) ? iniDateFormat : "dd MMM yyyy"
-    ;
+
+    IniRead, dateFormat, %settingsFile%, Settings, dateformat, "dd MMM yyyy"
+
     IniRead, outSection, %settingsFile%, Templates
     Loop, Parse, outSection, "`r`n"
     {
