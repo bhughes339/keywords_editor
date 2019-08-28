@@ -168,10 +168,6 @@ Menu, MenuBar, Add, View, :ViewMenu
 Gui, Menu, MenuBar
 
 Gui, Font, s%fontSize% norm, Verdana
-Gui, Add, Button, xm vCopyToClip gCopyToClip, Copy to Clipboard
-Gui, Add, Button, ys vKeywordTemp gKeywordsTemplate Section, Initialize with Keywords Template
-GuiControlGet, CopyToClip, Main:Pos
-GuiControlGet, KeywordTemp, Main:Pos
 GuiControl, Main:Move, KeywordTemp, % "x" getEditWidthScroll(80) - KeywordTempW + CopyToClipX
 Gui, Font, s%fontSize% norm, Consolas
 
