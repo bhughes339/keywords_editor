@@ -26,70 +26,13 @@ global mnemonic
 global dateFormat
 global defaultTemplateName := "Intl Group: Keywords"
 global templates := {}
-tempText =
-(
-Status        Date
-------------------
-Inhouse     -                    Interactions (to TEST):
-TEST        -                    Interactions (to LIVE):
-LIVE        - 
-TRAIN (RFT) -                    Interactions (from TEST):
 
-            * If there are no Interactions, please enter 'None'
-             MUST include date & Mnemonic for all Interaction checking
-            * Patched/Custom code: please add Peer Reviewer/Date below
-
-Patched/Custom?         Peer Reviewer/Date:
-
-
-Dev ID / DTS / Change Number
---------------------------
-
-
-*Required/Caused Dev IDs: Were ALL evaluated (include Details)? 
-*M-AT Standard change: Was 'Reconcile Patched Code' checked? 
-
-Special Instructions   (Client Update?  Y/N)
---------------------
-(Date done in...)   Inhouse:       TEST:      LIVE: 
-
-Downtime
--------------
-
-Routines impacted
------------------
-
-Programs/Menus/ddeffs
----------------------
-
- *To cut and paste into the keyword section, leave no blank lines
- *After loading the change to TEST, check against LIVE for Interactions
-)
+FileRead, tempText, *t templates\intl_keywords.txt
 templates["Intl Group: Keywords"] := tempText
-tempText =
-(
-Inhouse text contains program(s)/change#(s)/Dev ID(s)?
-Dev ID patch/move: Were Required/Caused Dev ID(s) eval'd & documented? 
-Keyword(s) filled out appropriately?
-Was 'Client Update?  Y/N' field responded to?
-Dev section updated?
-Change number(s) contain all programs/menus/ddeff?
-Code review (pgms/ddeff/menus) looks correct?
-Pgms/Macros: Cust. Notes & Commented lines are thorough?  (Y/N)
-ddeff/Menu changes: Documented in an included 'z...' pgm s comments?
 
-Confirm code is documented as described, for: 
- (Custom code) 'Process' section of custom spec. has appropriate comments?
- (Loops - Data changing) as 'Custom code' and coded in a zcus program?
- (Loops - Searching/counting) in In-house text has appropriate comments?
- (Trap code) details in Keywords, and the 'Trap File?' flag is set to 'Y'es?
-
-(For M-AT changes)
-CORE customs item has been updated with this patch information?
-
-Peer Reviewer: List your questions/concerns with their resolutions.
-)
+FileRead, tempText, *t templates\intl_peer_review.txt
 templates["Intl Group: Peer Review"] := tempText
+
 global defaultTemplate := templates[defaultTemplateName]
 global userTemplates := {}
 readSettings()
@@ -140,6 +83,7 @@ Menu, FileMenu, Add, Exit, MainGuiClose
 ; -- Actions
 Menu, ActionMenu, Add, Copy Keywords to clipboard`tCtrl+Shift+C, CopyToClip
 Menu, ActionMenu, Add, Insert date at cursor`tCtrl+D, AddDate
+Menu, ActionMenu, Add, Delete current line`tCtrl+K, DeleteLine
 
 ; -- View
 ; ---- :FontMenu
@@ -174,7 +118,7 @@ Gui, Font, s%fontSize% norm, Consolas
 Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" getEditWidthScroll(80)
 
 Gui, Font, s%fontSize% bold, Verdana
-Gui, Add, Text, % "xm w" getEditWidthScroll(80), ** Press Alt+Shift+V in the Keywords section of a task to paste the text above the current cursor.
+Gui, Add, Text, % "xm w" getEditWidthScroll(80), Press Alt+Shift+V in the Keywords section of AMS to paste above the current cursor.
 
 Gui, Show
 
@@ -327,6 +271,15 @@ if (match) {
     Edit_ReplaceSel(hEdit, output)
 }
 Return
+
+
+DeleteLine:
+char := Edit_LineIndex(hEdit)
+len := Edit_LineLength(hEdit)
+Edit_SetSel(hEdit, char, char + Edit_LineLength(hEdit) + 1)
+Edit_Clear(hEdit)
+Return
+
 
 ; =========
 ; Functions

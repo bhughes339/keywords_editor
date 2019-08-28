@@ -1,0 +1,20 @@
+Inhouse text contains program(s)/change#(s)/Dev ID(s)?
+Dev ID patch/move: Were Required/Caused Dev ID(s) eval'd & documented? 
+Keyword(s) filled out appropriately?
+Was 'Client Update?  Y/N' field responded to?
+Dev section updated?
+Change number(s) contain all programs/menus/ddeff?
+Code review (pgms/ddeff/menus) looks correct?
+Pgms/Macros: Cust. Notes & Commented lines are thorough?  (Y/N)
+ddeff/Menu changes: Documented in an included 'z...' pgm s comments?
+
+Confirm code is documented as described, for: 
+ (Custom code) 'Process' section of custom spec. has appropriate comments?
+ (Loops - Data changing) as 'Custom code' and coded in a zcus program?
+ (Loops - Searching/counting) in In-house text has appropriate comments?
+ (Trap code) details in Keywords, and the 'Trap File?' flag is set to 'Y'es?
+
+(For M-AT changes)
+CORE customs item has been updated with this patch information?
+
+Peer Reviewer: List your questions/concerns with their resolutions.
