@@ -2,8 +2,8 @@
 
 ## Features
 
-* **Initialize with Keywords Template** - Replace the current text with the most recent International group Keywords template as defined in the AMS canned text.
-  * Other commonly-used templates are available from the **File > Load template** menu. If you have a suggestion for a template that you think should be added, let me know.
+* **Built-in International Group Templates** - The International Group Keywords template and Peer Review template (canned text INTLCHANGE and INTLPR respectively) are available from the **File > Load template** menu
+  * If you have a suggestion for a template that you think should be added, let me know.
   
 * **Custom templates** - Select **Save current text as template** to create a new template which can be loaded from the **File > Load template** menu.
 
