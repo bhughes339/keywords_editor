@@ -1,0 +1,36 @@
+Status        Date
+------------------
+Inhouse     -                    Interactions (to TEST):
+TEST        -                    Interactions (to LIVE):
+LIVE        - 
+TRAIN (RFT) -                    Interactions (from TEST):
+
+            * If there are no Interactions, please enter 'None'
+             MUST include date & Mnemonic for all Interaction checking
+            * Patched/Custom code: please add Peer Reviewer/Date below
+
+Patched/Custom?         Peer Reviewer/Date:
+
+
+Dev ID / DTS / Change Number
+--------------------------
+
+
+*Required/Caused Dev IDs: Were ALL evaluated (include Details)? 
+*M-AT Standard change: Was 'Reconcile Patched Code' checked? 
+
+Special Instructions   (Client Update?  Y/N)
+--------------------
+(Date done in...)   Inhouse:       TEST:      LIVE: 
+
+Downtime
+-------------
+
+Routines impacted
+-----------------
+
+Programs/Menus/ddeffs
+---------------------
+
+ *To cut and paste into the keyword section, leave no blank lines
+ *After loading the change to TEST, check against LIVE for Interactions
