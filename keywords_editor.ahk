@@ -94,6 +94,8 @@ Menu, ActionMenu, Add, Delete current line`tCtrl+K, DeleteLine
 ; ---- :FontMenu
 Menu, ViewMenu, Add
 Menu, ViewMenu, DeleteAll
+Menu, FontMenu, Add
+Menu, FontMenu, DeleteAll
 for key, value in fSizes {
     Menu, FontMenu, Add, %key%, FontMenuHandler
     if (key == fontSize) {
@@ -174,15 +176,14 @@ Return
 
 
 FontMenuHandler:
-for key, value in fSizes {
-    Menu, FontMenu, Uncheck, %key%
+if (fontSize == A_ThisMenuItem) {
+    Return
 }
 fontSize := A_ThisMenuItem
 IniWrite, %fontSize%, %settingsFile%, Settings, fontsize
-Menu, FontMenu, Check, %fontSize%
-GuiControlGet, TextSection, Main:
+savedText := Edit_GetText(hEdit)
 Gosub InitGui
-GuiControl, Main:, TextSection, %TextSection%
+Edit_SetText(hEdit, savedText)
 Return
 
 
