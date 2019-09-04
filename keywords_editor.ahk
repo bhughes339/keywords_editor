@@ -24,7 +24,6 @@ global validDateFormats := ["dd MMM yyyy", "MMM dd, yyyy", "MM/dd/yyyy", "yyyy/M
 global fontSize
 global mnemonic
 global dateFormat
-global defaultTemplateName := "Intl Group: Keywords"
 global templates := {}
 global editWidth := 80
 
@@ -34,7 +33,6 @@ templates["Intl Group: Keywords"] := tempText
 FileRead, tempText, *t templates\intl_peer_review.txt
 templates["Intl Group: Peer Review"] := tempText
 
-global defaultTemplate := templates[defaultTemplateName]
 global userTemplates := {}
 readSettings()
 Gosub InitGui
@@ -267,11 +265,6 @@ Return
 
 CopyToClip:
 Clipboard := getFormattedText(hEdit)
-Return
-
-
-KeywordsTemplate:
-replaceText(hEdit, templates[defaultTemplateName])
 Return
 
 
