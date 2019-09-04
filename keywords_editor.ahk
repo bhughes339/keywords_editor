@@ -72,6 +72,8 @@ Gui, Font, s%fontSize% norm, Consolas
 ; -- File
 ; ---- :TemplateMenu
 Gosub UpdateTemplateMenus
+Menu, FileMenu, Add
+Menu, FileMenu, DeleteAll
 Menu, FileMenu, Add, Load template, :LoadTemplateMenu
 Menu, FileMenu, Add, Save current text as template`tCtrl+S, SaveTemplate
 Menu, FileMenu, Add, Delete custom template, :DeleteTemplateMenu
@@ -81,12 +83,16 @@ Menu, FileMenu, Add
 Menu, FileMenu, Add, Exit, MainGuiClose
 
 ; -- Actions
+Menu, ActionMenu, Add
+Menu, ActionMenu, DeleteAll
 Menu, ActionMenu, Add, Copy Keywords to clipboard`tCtrl+Shift+C, CopyToClip
 Menu, ActionMenu, Add, Insert date at cursor`tCtrl+D, AddDate
 Menu, ActionMenu, Add, Delete current line`tCtrl+K, DeleteLine
 
 ; -- View
 ; ---- :FontMenu
+Menu, ViewMenu, Add
+Menu, ViewMenu, DeleteAll
 for key, value in fSizes {
     Menu, FontMenu, Add, %key%, FontMenuHandler
     if (key == fontSize) {
