@@ -26,6 +26,7 @@ global mnemonic
 global dateFormat
 global defaultTemplateName := "Intl Group: Keywords"
 global templates := {}
+global editWidth := 80
 
 FileRead, tempText, *t templates\intl_keywords.txt
 templates["Intl Group: Keywords"] := tempText
@@ -111,14 +112,9 @@ Menu, MenuBar, Add, Actions, :ActionMenu
 Menu, MenuBar, Add, View, :ViewMenu
 Gui, Menu, MenuBar
 
-Gui, Font, s%fontSize% norm, Verdana
-GuiControl, Main:Move, KeywordTemp, % "x" getEditWidthScroll(80) - KeywordTempW + CopyToClipX
-Gui, Font, s%fontSize% norm, Consolas
+Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[fontSize] * editWidth)
 
-Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" getEditWidthScroll(80)
-
-Gui, Font, s%fontSize% bold, Verdana
-Gui, Add, Text, % "xm w" getEditWidthScroll(80), Press Alt+Shift+V in the Keywords section of AMS to paste above the current cursor.
+autoSize(hEdit, editWidth)
 
 Gui, Show
 
@@ -228,6 +224,7 @@ if (ErrorLevel == 0) {
 }
 Return
 
+
 SetMnemonic:
 Gui Main:+OwnDialogs
 InputBox, tempMnemonic, Set mnemonic, Enter your mnemonic (will be truncated to 4 characters):, , , 150, , , , , %mnemonic%
@@ -332,8 +329,23 @@ readSettings() {
 }
 
 
-getEditWidthScroll(chars) {
-    return fSizes[fontSize] * chars + 32
+autoSize(editHwnd, width) {
+    Edit_SetText(editHwnd, Format("{1:090x}", 0))
+    while (StrLen(Edit_GetLine(editHwnd, 0)) < width) {
+        Edit_GetRect(editHwnd, rectleft, recttop, rectright, rectbottom)
+        Edit_SetRect(editHwnd, rectleft-1, recttop-1, rectright+2, rectbottom+1)
+    }
+    Edit_GetRect(editHwnd, rectleft, recttop, rectright, rectbottom)
+    Edit_SetText(editHwnd, "")
+
+    newWidth := rectright - rectleft + 30
+
+    GuiControl, Move, %editHwnd%, % "w" newWidth
+    Edit_SetRect(editHwnd, rectleft-1, recttop-1, rectright+1, rectbottom+1)
+
+    Gui, Font, s%fontSize% bold, Verdana
+    Gui, Add, Text, % "xm w" newWidth, Press Alt+Shift+V in the Keywords section of AMS to paste above the current cursor.
+    Gui, Font, s%fontSize% norm, Consolas
 }
 
 
