@@ -24,8 +24,8 @@ global validDateFormats := ["dd MMM yyyy", "MMM dd, yyyy", "MM/dd/yyyy", "yyyy/M
 global fontSize
 global mnemonic
 global dateFormat
-global defaultTemplateName := "Intl Group: Keywords"
 global templates := {}
+global editWidth := 80
 
 FileRead, tempText, *t templates\intl_keywords.txt
 templates["Intl Group: Keywords"] := tempText
@@ -33,7 +33,6 @@ templates["Intl Group: Keywords"] := tempText
 FileRead, tempText, *t templates\intl_peer_review.txt
 templates["Intl Group: Peer Review"] := tempText
 
-global defaultTemplate := templates[defaultTemplateName]
 global userTemplates := {}
 readSettings()
 Gosub InitGui
@@ -93,6 +92,8 @@ Menu, ActionMenu, Add, Delete current line`tCtrl+K, DeleteLine
 ; ---- :FontMenu
 Menu, ViewMenu, Add
 Menu, ViewMenu, DeleteAll
+Menu, FontMenu, Add
+Menu, FontMenu, DeleteAll
 for key, value in fSizes {
     Menu, FontMenu, Add, %key%, FontMenuHandler
     if (key == fontSize) {
@@ -111,14 +112,9 @@ Menu, MenuBar, Add, Actions, :ActionMenu
 Menu, MenuBar, Add, View, :ViewMenu
 Gui, Menu, MenuBar
 
-Gui, Font, s%fontSize% norm, Verdana
-GuiControl, Main:Move, KeywordTemp, % "x" getEditWidthScroll(80) - KeywordTempW + CopyToClipX
-Gui, Font, s%fontSize% norm, Consolas
+Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[fontSize] * editWidth)
 
-Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" getEditWidthScroll(80)
-
-Gui, Font, s%fontSize% bold, Verdana
-Gui, Add, Text, % "xm w" getEditWidthScroll(80), Press Alt+Shift+V in the Keywords section of AMS to paste above the current cursor.
+autoSize(hEdit, editWidth)
 
 Gui, Show
 
@@ -178,15 +174,14 @@ Return
 
 
 FontMenuHandler:
-for key, value in fSizes {
-    Menu, FontMenu, Uncheck, %key%
+if (fontSize == A_ThisMenuItem) {
+    Return
 }
 fontSize := A_ThisMenuItem
 IniWrite, %fontSize%, %settingsFile%, Settings, fontsize
-Menu, FontMenu, Check, %fontSize%
-GuiControlGet, TextSection, Main:
+savedText := Edit_GetText(hEdit)
 Gosub InitGui
-GuiControl, Main:, TextSection, %TextSection%
+Edit_SetText(hEdit, savedText)
 Return
 
 
@@ -227,6 +222,7 @@ if (ErrorLevel == 0) {
     GoSub UpdateDateMenu
 }
 Return
+
 
 SetMnemonic:
 Gui Main:+OwnDialogs
@@ -269,11 +265,6 @@ Return
 
 CopyToClip:
 Clipboard := getFormattedText(hEdit)
-Return
-
-
-KeywordsTemplate:
-replaceText(hEdit, templates[defaultTemplateName])
 Return
 
 
@@ -332,8 +323,23 @@ readSettings() {
 }
 
 
-getEditWidthScroll(chars) {
-    return fSizes[fontSize] * chars + 32
+autoSize(editHwnd, width) {
+    Edit_SetText(editHwnd, Format("{1:090x}", 0))
+    while (StrLen(Edit_GetLine(editHwnd, 0)) < width) {
+        Edit_GetRect(editHwnd, rectleft, recttop, rectright, rectbottom)
+        Edit_SetRect(editHwnd, rectleft-1, recttop-1, rectright+2, rectbottom+1)
+    }
+    Edit_GetRect(editHwnd, rectleft, recttop, rectright, rectbottom)
+    Edit_SetText(editHwnd, "")
+
+    newWidth := rectright - rectleft + 30
+
+    GuiControl, Move, %editHwnd%, % "w" newWidth
+    Edit_SetRect(editHwnd, rectleft-1, recttop-1, rectright+1, rectbottom+1)
+
+    Gui, Font, s%fontSize% bold, Verdana
+    Gui, Add, Text, % "xm w" newWidth, Press Alt+Shift+V in the Keywords section of AMS to paste above the current cursor.
+    Gui, Font, s%fontSize% norm, Consolas
 }
 
 
