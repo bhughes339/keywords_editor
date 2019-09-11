@@ -28,10 +28,10 @@ global templates := {}
 global editWidth := 80
 
 FileRead, tempText, *t templates\intl_keywords.txt
-templates["Intl Group: Keywords"] := tempText
+templates["Intl Group: Keywords"] := Edit_Convert2Unix(tempText)
 
 FileRead, tempText, *t templates\intl_peer_review.txt
-templates["Intl Group: Peer Review"] := tempText
+templates["Intl Group: Peer Review"] := Edit_Convert2Unix(tempText)
 
 global userTemplates := {}
 readSettings()
@@ -44,9 +44,9 @@ Return
 ; =======
 
 !+v::
-fText := getFormattedText(hEdit)
+fText := Edit_Convert2Unix(getFormattedText(hEdit))
 SendInput {End}{Space}
-Loop, Parse, fText, `n, `r
+Loop, Parse, fText, `n
 {
     Sleep 50
     line := RTrim(A_LoopField)
@@ -250,8 +250,8 @@ if (ErrorLevel == 0) {
     }
     editText := Edit_GetText(hEdit)
     userTemplates[templateName] := editText
-    newText := RegExReplace(Edit_GetText(hEdit), "`r*`n", "\n")
-    IniWrite, %newText%, %settingsFile%, Templates, %templateName%
+    escapedText := escapeNewlines(Edit_Convert2Unix(editText))
+    IniWrite, %escapedText%, %settingsFile%, Templates, %templateName%
 }
 Gosub UpdateTemplateMenus
 Return
@@ -325,7 +325,8 @@ readSettings() {
     IniRead, dateFormat, %settingsFile%, Settings, dateformat, "dd MMM yyyy"
 
     IniRead, outSection, %settingsFile%, Templates
-    Loop, Parse, outSection, "`r`n"
+    outSection := Edit_Convert2Unix(outSection)
+    Loop, Parse, outSection, "`n"
     {
         line := StrSplit(A_LoopField, "=", "", 2)
         userTemplates[line[1]] := RegExReplace(line[2], "\\n", "`n")
@@ -357,7 +358,7 @@ getFormattedText(editHwnd) {
     Edit_FmtLines(editHwnd, True)
     ; Strip whitespace from the end of the text
     fText := RegExReplace(Edit_GetText(editHwnd), "D)\s+$", "")
-    ; Format newlines to CRLF
+    ; Format newlines to CRLF (including soft line breaks from Edit_FmtLines)
     fText := RegExReplace(fText, "\r*\n", "`r`n")
     ; Strip whitespace from end of each line
     fText := RegExReplace(fText, "m) +$", "")
@@ -378,7 +379,7 @@ loadSavedKeywords(editHwnd) {
     if FileExist(savedFile) {
         MsgBox, 1, Saved text found, Saved text was found from last session. Load it?
         IfMsgBox, Ok
-            Edit_ReadFile(editHwnd, savedFile)
+            Edit_ReadFile(editHwnd, savedFile, "", True)
         Else
             Return
     }
@@ -387,7 +388,7 @@ loadSavedKeywords(editHwnd) {
 
 replaceText(editHwnd, newText) {
     Gui Main:+OwnDialogs
-    newText := RegExReplace(newText, "\n", "`r`n")
+    newText := Edit_Convert2DOS(newText)
     trimmedText := RegExReplace(Edit_GetText(editHwnd), "Ds)^\s*(.*)\s*$", "$1")
     if (trimmedText) {
         MsgBox, 1, Text present, This will replace the current text. Are you sure?
@@ -398,6 +399,13 @@ replaceText(editHwnd, newText) {
     } else {
         Edit_SetText(editHwnd, newText)
     }
+}
+
+
+escapeNewlines(fText) {
+    fText := RegExReplace(fText, "\r", "\r")
+    fText := RegExReplace(fText, "\n", "\n")
+    return fText
 }
 
 
