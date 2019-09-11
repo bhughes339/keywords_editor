@@ -87,6 +87,7 @@ Menu, ActionMenu, DeleteAll
 Menu, ActionMenu, Add, Copy Keywords to clipboard`tCtrl+Shift+C, CopyToClip
 Menu, ActionMenu, Add, Insert date at cursor`tCtrl+D, AddDate
 Menu, ActionMenu, Add, Delete current line`tCtrl+K, DeleteLine
+Menu, ActionMenu, Add, Format text`tF3, FormatText
 
 ; -- View
 ; ---- :FontMenu
@@ -297,6 +298,15 @@ char := Edit_LineIndex(hEdit)
 len := Edit_LineLength(hEdit)
 Edit_SetSel(hEdit, char, char + Edit_LineLength(hEdit) + 1)
 Edit_Clear(hEdit)
+Return
+
+
+FormatText:
+newText := Edit_GetText(hEdit)
+Edit_GetSel(hEdit, startSel, endSel)
+Edit_SetText(hEdit, newText)
+Edit_SetSel(hEdit, startSel, endSel)
+Edit_WriteFile(hEdit, savedFile)
 Return
 
 
