@@ -25,15 +25,11 @@ global fontSize
 global mnemonic
 global dateFormat
 global templates := {}
+global userTemplates := {}
 global editWidth := 80
 
-FileRead, tempText, *t templates\intl_keywords.txt
-templates["Intl Group: Keywords"] := Edit_Convert2Unix(tempText)
+defaultTemplates()
 
-FileRead, tempText, *t templates\intl_peer_review.txt
-templates["Intl Group: Peer Review"] := Edit_Convert2Unix(tempText)
-
-global userTemplates := {}
 readSettings()
 Gosub InitGui
 loadSavedKeywords(hEdit)
@@ -415,6 +411,75 @@ HasVal(haystack, needle) {
     if !(IsObject(haystack))
         throw Exception("Bad haystack!", -1, haystack)
     return 0
+}
+
+
+defaultTemplates() {
+    tempText = 
+    (
+Status        Date
+------------------
+Inhouse     -                    Interactions (to TEST):
+TEST        -                    Interactions (to LIVE):
+LIVE        - 
+TRAIN (RFT) -                    Interactions (from TEST):
+
+            * If there are no Interactions, please enter 'None'
+             MUST include date & Mnemonic for all Interaction checking
+            * Patched/Custom code: please add Peer Reviewer/Date below
+
+Patched/Custom?         Peer Reviewer/Date:
+
+
+Dev ID / DTS / Change Number
+--------------------------
+
+
+*Required/Caused Dev IDs: Were ALL evaluated (include Details)? 
+*M-AT Standard change: Was 'Reconcile Patched Code' checked? 
+
+Special Instructions   (Client Update?  Y/N)
+--------------------
+(Date done in...)   Inhouse:       TEST:      LIVE: 
+
+Downtime
+-------------
+
+Routines impacted
+-----------------
+
+Programs/Menus/ddeffs
+---------------------
+
+ *To cut and paste into the keyword section, leave no blank lines
+ *After loading the change to TEST, check against LIVE for Interactions
+    )
+    templates["Intl Group: Keywords"] := tempText
+
+    tempText = 
+    (
+Inhouse text contains program(s)/change#(s)/Dev ID(s)?
+Dev ID patch/move: Were Required/Caused Dev ID(s) eval'd & documented? 
+Keyword(s) filled out appropriately?
+Was 'Client Update?  Y/N' field responded to?
+Dev section updated?
+Change number(s) contain all programs/menus/ddeff?
+Code review (pgms/ddeff/menus) looks correct?
+Pgms/Macros: Cust. Notes & Commented lines are thorough?  (Y/N)
+ddeff/Menu changes: Documented in an included 'z...' pgm s comments?
+
+Confirm code is documented as described, for: 
+ (Custom code) 'Process' section of custom spec. has appropriate comments?
+ (Loops - Data changing) as 'Custom code' and coded in a zcus program?
+ (Loops - Searching/counting) in In-house text has appropriate comments?
+ (Trap code) details in Keywords, and the 'Trap File?' flag is set to 'Y'es?
+
+(For M-AT changes)
+CORE customs item has been updated with this patch information?
+
+Peer Reviewer: List your questions/concerns with their resolutions.
+    )
+    templates["Intl Group: Peer Review"] := tempText
 }
 
 ; https://www.autohotkey.com/boards/viewtopic.php?f=6&t=5063
