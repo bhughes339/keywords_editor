@@ -77,8 +77,6 @@ Menu, FileMenu, Add, Load template, :LoadTemplateMenu
 Menu, FileMenu, Add, Save current text as template`tCtrl+S, SaveTemplate
 Menu, FileMenu, Add, Delete custom template, :DeleteTemplateMenu
 Menu, FileMenu, Add
-Menu, FileMenu, Add, Set mnemonic..., SetMnemonic
-Menu, FileMenu, Add
 Menu, FileMenu, Add, Exit, MainGuiClose
 
 ; -- Actions
@@ -89,10 +87,11 @@ Menu, ActionMenu, Add, Insert date at cursor`tCtrl+D, AddDate
 Menu, ActionMenu, Add, Delete current line`tCtrl+K, DeleteLine
 Menu, ActionMenu, Add, Format text`tF3, FormatText
 
-; -- View
+; -- Options
+Menu, OptionsMenu, Add
+Menu, OptionsMenu, DeleteAll
+Menu, OptionsMenu, Add, Set mnemonic..., SetMnemonic
 ; ---- :FontMenu
-Menu, ViewMenu, Add
-Menu, ViewMenu, DeleteAll
 Menu, FontMenu, Add
 Menu, FontMenu, DeleteAll
 for key, value in fSizes {
@@ -101,16 +100,15 @@ for key, value in fSizes {
         Menu, FontMenu, Check, %key%
     }
 }
-Menu, ViewMenu, Add, Font size, :FontMenu
-
+Menu, OptionsMenu, Add, Font size, :FontMenu
 ; ---- :DateFormatMenu
 GoSub UpdateDateMenu
-Menu, ViewMenu, Add, Date format, :DateFormatMenu
+Menu, OptionsMenu, Add, Date format, :DateFormatMenu
 
 ; -- Menu
 Menu, MenuBar, Add, File, :FileMenu
 Menu, MenuBar, Add, Actions, :ActionMenu
-Menu, MenuBar, Add, View, :ViewMenu
+Menu, MenuBar, Add, Options, :OptionsMenu
 Gui, Menu, MenuBar
 
 Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[fontSize] * editWidth)
