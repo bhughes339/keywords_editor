@@ -322,8 +322,10 @@ readSettings() {
     outSection := Edit_Convert2Unix(outSection)
     Loop, Parse, outSection, "`n"
     {
-        line := StrSplit(A_LoopField, "=", "", 2)
-        userTemplates[line[1]] := RegExReplace(line[2], "\\n", "`n")
+        matchPos := RegExMatch(A_LoopField, "^(.+?)=(.+)", match)
+        if (matchPos) {
+            userTemplates[match1] := RegExReplace(match2, "\\n", "`n")
+        }
     }
 }
 
