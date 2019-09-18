@@ -413,17 +413,20 @@ fetchDefaultTemplates() {
         whr.WaitForResponse()
         fullText := whr.ResponseText
 
-        needleText := "O)<template name=""([^""]+?)"">(.+?)</template>"
-        RegExMatch(fullText, needleText, match)
-        while (match) {
-            tempKey := match.Value(1)
-            tempText := RegExReplace(Edit_Convert2Unix(match.Value(2)), "Ds)^\s*(.*)\s*$", "$1")
-            tempText := escapeNewlines(tempText)
-            RegWrite, REG_SZ, %registryKey%, %tempKey%, %tempText%
-            RegExMatch(fullText, needleText, match, (match.Pos() + match.Len()))
+        if (fullText) {
+            RegDelete, %registryKey%
+
+            needleText := "O)<template name=""([^""]+?)"">(.+?)</template>"
+            RegExMatch(fullText, needleText, match)
+            while (match) {
+                tempKey := match.Value(1)
+                tempText := RegExReplace(Edit_Convert2Unix(match.Value(2)), "Ds)^\s*(.*)\s*$", "$1")
+                tempText := escapeNewlines(tempText)
+                RegWrite, REG_SZ, %registryKey%, %tempKey%, %tempText%
+                RegExMatch(fullText, needleText, match, (match.Pos() + match.Len()))
+            }
         }
     }
-
     Loop, Reg, %registryKey%
     {
         RegRead, value
