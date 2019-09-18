@@ -33,6 +33,14 @@ defaultTemplates()
 readSettings()
 Gosub InitGui
 loadSavedKeywords(hEdit)
+
+#IfWinActive ahk_group KeywordsEditor
+; Add any program-specific hotkeys here
+^Backspace::Send ^+{Left}{Backspace}
+^+Backspace::Send +{Home}{Backspace}
+
+#If
+
 Return
 
 ; =======
@@ -113,11 +121,7 @@ autoSize(hEdit, editWidth)
 
 Gui, Show
 
-Hotkey, IfWinActive, ahk_id %MainHwnd%
-; Add any program-specific hotkeys here
-^Backspace::Send ^+{Left}{Backspace}
-^+Backspace::Send +{Home}{Backspace}
-
+GroupAdd, KeywordsEditor, ahk_id %MainHwnd%
 Return
 
 ; ===========
