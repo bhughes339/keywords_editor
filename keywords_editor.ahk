@@ -69,7 +69,10 @@ Return
 ; ===========
 
 InitGui:
+savedText := Edit_GetText(hEdit)
 Gui, Main:New, HwndMainHwnd, Keywords Editor
+Gui, Main:+Resize +MinSize +MinSizex100
+Gui, Margin, 10, 10
 Gui, Font, s%fontSize% norm, Consolas
 
 ; -- File
@@ -119,7 +122,9 @@ Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[fontSiz
 
 autoSize(hEdit, editWidth)
 
-Gui, Show
+Gui, Show, AutoSize
+
+Edit_SetText(hEdit, savedText)
 
 GroupAdd, KeywordsEditor, ahk_id %MainHwnd%
 Return
@@ -178,9 +183,7 @@ if (fontSize == A_ThisMenuItem) {
 }
 fontSize := A_ThisMenuItem
 IniWrite, %fontSize%, %settingsFile%, Settings, fontsize
-savedText := Edit_GetText(hEdit)
 Gosub InitGui
-Edit_SetText(hEdit, savedText)
 Return
 
 
@@ -252,6 +255,11 @@ if (ErrorLevel == 0) {
     IniWrite, %escapedText%, %settingsFile%, Templates, %templateName%
 }
 Gosub UpdateTemplateMenus
+Return
+
+
+MainGuiSize:
+GuiControl, Move, TextSection, % "h" (A_GuiHeight - 20)
 Return
 
 
@@ -341,16 +349,11 @@ autoSize(editHwnd, width) {
         Edit_SetRect(editHwnd, rectleft-1, recttop-1, rectright+2, rectbottom+1)
     }
     Edit_GetRect(editHwnd, rectleft, recttop, rectright, rectbottom)
-    Edit_SetText(editHwnd, "")
 
     newWidth := rectright - rectleft + 30
 
     GuiControl, Move, %editHwnd%, % "w" newWidth
     Edit_SetRect(editHwnd, rectleft-1, recttop-1, rectright+1, rectbottom+1)
-
-    Gui, Font, s%fontSize% bold, Verdana
-    Gui, Add, Text, % "xm w" newWidth, Press Alt+Shift+V in the Keywords section of AMS to paste above the current cursor.
-    Gui, Font, s%fontSize% norm, Consolas
 }
 
 
