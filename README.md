@@ -10,6 +10,8 @@ Text editor designed to alleviate the issues with the AMS Keywords section. Grea
 * Today's date/mnemonic insertion
 * Automatic crash recovery
 
+The built-in templates are pulled from a [Github gist](https://gist.github.com/bhughes339/31b6f3f2b9cbf669d62f498208b27a52) maintained by me. It will be updated alongside any International Group template changes. Any revisions to the templates can be viewed from that link.
+
 ## Installation
 
 #### Standalone executable (no installation required)

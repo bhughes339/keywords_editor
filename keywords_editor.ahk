@@ -21,14 +21,12 @@ global settingsFile := RegexReplace(A_ScriptName, "\.[^.]+$", "") ".ini"
 global savedFile := A_ScriptDir . "/~saved_keywords.txt"
 global fSizes := {10: 7, 11: 8, 12: 9, 14: 10}
 global validDateFormats := ["dd MMM yyyy", "MMM dd, yyyy", "MM/dd/yyyy", "yyyy/MM/dd"]
-global fontSize
-global mnemonic
-global dateFormat
+global templateUrl := "https://gist.githubusercontent.com/bhughes339/31b6f3f2b9cbf669d62f498208b27a52/raw/keyword_templates.txt"
+global registryKey := "HKCU\Software\Keywords Editor\Templates"
 global templates := {}
 global userTemplates := {}
 global editWidth := 80
-
-defaultTemplates()
+global fontSize, mnemonic, dateFormat
 
 readSettings()
 Gosub InitGui
@@ -339,6 +337,8 @@ readSettings() {
             userTemplates[match1] := RegExReplace(match2, "\\n", "`n")
         }
     }
+
+    fetchDefaultTemplates()
 }
 
 
@@ -412,6 +412,36 @@ escapeNewlines(fText) {
 }
 
 
+fetchDefaultTemplates() {
+    try {
+        whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+        whr.Open("GET", templateUrl, true)
+        whr.Send()
+        whr.WaitForResponse()
+        fullText := whr.ResponseText
+
+        if (fullText) {
+            RegDelete, %registryKey%
+
+            needleText := "O)<template name=""([^""]+?)"">(.+?)</template>"
+            RegExMatch(fullText, needleText, match)
+            while (match) {
+                tempKey := match.Value(1)
+                tempText := RegExReplace(Edit_Convert2Unix(match.Value(2)), "Ds)^\s*(.*)\s*$", "$1")
+                tempText := escapeNewlines(tempText)
+                RegWrite, REG_SZ, %registryKey%, %tempKey%, %tempText%
+                RegExMatch(fullText, needleText, match, (match.Pos() + match.Len()))
+            }
+        }
+    }
+    Loop, Reg, %registryKey%
+    {
+        RegRead, value
+        templates[A_LoopRegName] := RegExReplace(value, "\\n", "`n")
+    }
+}
+
+
 ; https://autohotkey.com/boards/viewtopic.php?p=109617&sid=a057c8ab901a3ab88f6304b71729c892#p109617
 HasVal(haystack, needle) {
     for index, value in haystack
@@ -422,74 +452,6 @@ HasVal(haystack, needle) {
     return 0
 }
 
-
-defaultTemplates() {
-    tempText = 
-    (
-Status        Date
-------------------
-Inhouse     -                    Interactions (to TEST):
-TEST        -                    Interactions (to LIVE):
-LIVE        - 
-TRAIN (RFT) -                    Interactions (from TEST):
-
-            * If there are no Interactions, please enter 'None'
-             MUST include date & Mnemonic for all Interaction checking
-            * Patched/Custom code: please add Peer Reviewer/Date below
-
-Patched/Custom?         Peer Reviewer/Date:
-
-
-Dev ID / DTS / Change Number
---------------------------
-
-
-*Required/Caused Dev IDs: Were ALL evaluated (include Details)? 
-*M-AT Standard change: Was 'Reconcile Patched Code' checked? 
-
-Special Instructions   (Client Update?  Y/N)
---------------------
-(Date done in...)   Inhouse:       TEST:      LIVE: 
-
-Downtime
--------------
-
-Routines impacted
------------------
-
-Programs/Menus/ddeffs
----------------------
-
- *To cut and paste into the keyword section, leave no blank lines
- *After loading the change to TEST, check against LIVE for Interactions
-    )
-    templates["Intl Group: Keywords"] := tempText
-
-    tempText = 
-    (
-Inhouse text contains program(s)/change#(s)/Dev ID(s)?
-Dev ID patch/move: Were Required/Caused Dev ID(s) eval'd & documented? 
-Keyword(s) filled out appropriately?
-Was 'Client Update?  Y/N' field responded to?
-Dev section updated?
-Change number(s) contain all programs/menus/ddeff?
-Code review (pgms/ddeff/menus) looks correct?
-Pgms/Macros: Cust. Notes & Commented lines are thorough?  (Y/N)
-ddeff/Menu changes: Documented in an included 'z...' pgm s comments?
-
-Confirm code is documented as described, for: 
- (Custom code) 'Process' section of custom spec. has appropriate comments?
- (Loops - Data changing) as 'Custom code' and coded in a zcus program?
- (Loops - Searching/counting) in In-house text has appropriate comments?
- (Trap code) details in Keywords, and the 'Trap File?' flag is set to 'Y'es?
-
-(For M-AT changes)
-CORE customs item has been updated with this patch information?
-
-Peer Reviewer: List your questions/concerns with their resolutions.
-    )
-    templates["Intl Group: Peer Review"] := tempText
-}
 
 ; https://www.autohotkey.com/boards/viewtopic.php?f=6&t=5063
 #include %A_ScriptDir%\Edit\_Functions
