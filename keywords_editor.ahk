@@ -118,7 +118,9 @@ Gui, Menu, MenuBar
 
 Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[fontSize] * editWidth)
 
+GuiControl, Hide, TextSection
 autoSize(hEdit, editWidth)
+GuiControl, Show, TextSection
 
 Gui, Show, AutoSize
 
@@ -349,6 +351,8 @@ autoSize(editHwnd, width) {
         Edit_SetRect(editHwnd, rectleft-1, recttop-1, rectright+2, rectbottom+1)
     }
     Edit_GetRect(editHwnd, rectleft, recttop, rectright, rectbottom)
+
+    Edit_SetText(editHwnd, "")
 
     newWidth := rectright - rectleft + 30
 
