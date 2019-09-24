@@ -417,25 +417,27 @@ escapeNewlines(fText) {
 
 
 fetchDefaultTemplates() {
+    fullText := ""
     try {
         whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
         whr.Open("GET", templateUrl, true)
         whr.Send()
         whr.WaitForResponse()
         fullText := whr.ResponseText
-
-        if (fullText) {
+    }
+    if (fullText) {
+        try {
             RegDelete, %registryKey%
+        }
 
-            needleText := "O)<template name=""([^""]+?)"">(.+?)</template>"
-            RegExMatch(fullText, needleText, match)
-            while (match) {
-                tempKey := match.Value(1)
-                tempText := RegExReplace(Edit_Convert2Unix(match.Value(2)), "Ds)^\s*(.*)\s*$", "$1")
-                tempText := escapeNewlines(tempText)
-                RegWrite, REG_SZ, %registryKey%, %tempKey%, %tempText%
-                RegExMatch(fullText, needleText, match, (match.Pos() + match.Len()))
-            }
+        needleText := "O)<template name=""([^""]+?)"">(.+?)</template>"
+        RegExMatch(fullText, needleText, match)
+        while (match) {
+            tempKey := match.Value(1)
+            tempText := RegExReplace(Edit_Convert2Unix(match.Value(2)), "Ds)^\s*(.*)\s*$", "$1")
+            tempText := escapeNewlines(tempText)
+            RegWrite, REG_SZ, %registryKey%, %tempKey%, %tempText%
+            RegExMatch(fullText, needleText, match, (match.Pos() + match.Len()))
         }
     }
     Loop, Reg, %registryKey%
