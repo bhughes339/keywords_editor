@@ -38,6 +38,11 @@ Alternatively, you can use the shortcut <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>V</
 
 Settings are stored in `keywords_editor.json` which resides in the same folder as the executable. 
 
+## Dependencies
+
+* [Edit Library v2.0](https://www.autohotkey.com/boards/viewtopic.php?f=6&t=5063)
+* [AutoHotkey-JSON](https://github.com/cocobelgica/AutoHotkey-JSON)
+
 ---
 
 Special thanks to Ann Drysdale for testing and feature recommendations!
