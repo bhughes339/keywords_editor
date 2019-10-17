@@ -33,6 +33,7 @@ Gosub InitGui
 loadSavedKeywords(hEdit)
 
 #IfWinActive ahk_group KeywordsEditor
+
 ; Add any program-specific hotkeys here
 ^Backspace::Send ^+{Left}{Backspace}
 ^+Backspace::Send +{Home}{Backspace}
@@ -41,9 +42,10 @@ loadSavedKeywords(hEdit)
 
 Return
 
-; =======
-; Hotkeys
-; =======
+
+; ==============
+; Global Hotkeys
+; ==============
 
 !+v::
 fText := Edit_Convert2Unix(getFormattedText(hEdit))
@@ -61,6 +63,7 @@ Loop, Parse, fText, `n
 }
 SendInput {Ins}================================================================================{Down}{Ins}{Space}
 Return
+
 
 ; ===========
 ; Subroutines
@@ -130,14 +133,77 @@ Edit_SetText(hEdit, savedText)
 GroupAdd, KeywordsEditor, ahk_id %MainHwnd%
 Return
 
+
 ; ===========
 ; Subroutines
 ; ===========
+
+MainButtonCancel:
+MainGuiClose:
+FileDelete, %savedFile%
+ExitApp
+Return
+
+
+MainGuiSize:
+GuiControl, Move, TextSection, % "h" (A_GuiHeight - 20)
+Return
+
 
 TextSection:
 Edit_WriteFile(hEdit, savedFile)
 Return
 
+
+CopyToClip:
+Clipboard := getFormattedText(hEdit)
+Return
+
+
+AddDate:
+FormatTime, output,, % settings["dateFormat"]
+output := (settings["mnemonic"]) ? (output " --" settings["mnemonic"]) : output
+outLen := StrLen(output)
+Edit_GetSel(hEdit, cPos)
+rangeText := Edit_GetTextRange(hEdit, cPos, cPos+outLen)
+match := RegExMatch(rangeText, "[^ ]")
+if (match) {
+    charLine := Edit_LineFromChar(hEdit, cPos)
+    match := RegExMatch(rangeText, "P)^ *(?=\r|\n)", matchLen)
+    if (match) {
+        totalLen := Edit_LineLength(hEdit, charLine) + matchLen + outLen
+        if (totalLen <= 80) {
+            Edit_SetSel(hEdit, cPos, cPos+matchLen)
+            Edit_ReplaceSel(hEdit, output)
+        }
+    }
+} else {
+    Edit_SetSel(hEdit, cPos, cPos+outLen)
+    Edit_ReplaceSel(hEdit, output)
+}
+Return
+
+
+DeleteLine:
+char := Edit_LineIndex(hEdit)
+len := Edit_LineLength(hEdit)
+Edit_SetSel(hEdit, char, char + Edit_LineLength(hEdit) + 1)
+Edit_Clear(hEdit)
+Return
+
+
+FormatText:
+newText := Edit_GetText(hEdit)
+Edit_GetSel(hEdit, startSel, endSel)
+Edit_SetText(hEdit, newText)
+Edit_SetSel(hEdit, startSel, endSel)
+Edit_WriteFile(hEdit, savedFile)
+Return
+
+
+; =============
+; Menu Handlers
+; =============
 
 UpdateTemplateMenus:
 Menu, LoadTemplateMenu, Add
@@ -154,9 +220,6 @@ for key, value in userTemplates {
 }
 Return
 
-; =============
-; Menu Handlers
-; =============
 
 TemplateMenuHandler:
 replaceText(hEdit, defaultTemplates[A_ThisMenuItem])
@@ -254,64 +317,6 @@ if (ErrorLevel == 0) {
     saveSettings()
 }
 Gosub UpdateTemplateMenus
-Return
-
-
-MainGuiSize:
-GuiControl, Move, TextSection, % "h" (A_GuiHeight - 20)
-Return
-
-
-MainButtonCancel:
-MainGuiClose:
-FileDelete, %savedFile%
-ExitApp
-Return
-
-
-CopyToClip:
-Clipboard := getFormattedText(hEdit)
-Return
-
-
-AddDate:
-FormatTime, output,, % settings["dateFormat"]
-output := (settings["mnemonic"]) ? (output " --" settings["mnemonic"]) : output
-outLen := StrLen(output)
-Edit_GetSel(hEdit, cPos)
-rangeText := Edit_GetTextRange(hEdit, cPos, cPos+outLen)
-match := RegExMatch(rangeText, "[^ ]")
-if (match) {
-    charLine := Edit_LineFromChar(hEdit, cPos)
-    match := RegExMatch(rangeText, "P)^ *(?=\r|\n)", matchLen)
-    if (match) {
-        totalLen := Edit_LineLength(hEdit, charLine) + matchLen + outLen
-        if (totalLen <= 80) {
-            Edit_SetSel(hEdit, cPos, cPos+matchLen)
-            Edit_ReplaceSel(hEdit, output)
-        }
-    }
-} else {
-    Edit_SetSel(hEdit, cPos, cPos+outLen)
-    Edit_ReplaceSel(hEdit, output)
-}
-Return
-
-
-DeleteLine:
-char := Edit_LineIndex(hEdit)
-len := Edit_LineLength(hEdit)
-Edit_SetSel(hEdit, char, char + Edit_LineLength(hEdit) + 1)
-Edit_Clear(hEdit)
-Return
-
-
-FormatText:
-newText := Edit_GetText(hEdit)
-Edit_GetSel(hEdit, startSel, endSel)
-Edit_SetText(hEdit, newText)
-Edit_SetSel(hEdit, startSel, endSel)
-Edit_WriteFile(hEdit, savedFile)
 Return
 
 
@@ -470,4 +475,4 @@ HasVal(haystack, needle) {
 ; https://www.autohotkey.com/boards/viewtopic.php?f=6&t=5063
 #include %A_ScriptDir%\Edit\_Functions
 #include Edit.ahk
-#include %A_ScriptDir%\\AutoHotkey-JSON\JSON.ahk
+#include %A_ScriptDir%\AutoHotkey-JSON\JSON.ahk
