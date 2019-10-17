@@ -24,6 +24,7 @@ global validDateFormats := ["dd MMM yyyy", "MMM dd, yyyy", "MM/dd/yyyy", "yyyy/M
 global templateUrl := "https://gist.githubusercontent.com/bhughes339/31b6f3f2b9cbf669d62f498208b27a52/raw/keyword_templates.txt"
 global registryKey := "HKCU\Software\Keywords Editor\Templates"
 global settings := {}
+global userTemplates = {}
 global defaultTemplates := {}
 global editWidth := 80
 
@@ -70,7 +71,7 @@ savedText := Edit_GetText(hEdit)
 Gui, Main:New, HwndMainHwnd, Keywords Editor
 Gui, Main:+Resize +MinSize +MinSizex100
 Gui, Margin, 10, 10
-fontSize := settings["settings"]["fontSize"]
+fontSize := settings["fontSize"]
 Gui, Font, s%fontSize% norm, Consolas
 
 ; -- File
@@ -101,7 +102,7 @@ Menu, FontMenu, Add
 Menu, FontMenu, DeleteAll
 for key, value in fSizes {
     Menu, FontMenu, Add, %key%, FontMenuHandler
-    if (key == settings["settings"]["fontSize"]) {
+    if (key == settings["fontSize"]) {
         Menu, FontMenu, Check, %key%
     }
 }
@@ -116,7 +117,7 @@ Menu, MenuBar, Add, Actions, :ActionMenu
 Menu, MenuBar, Add, Options, :OptionsMenu
 Gui, Menu, MenuBar
 
-Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[settings["settings"]["fontSize"]] * editWidth)
+Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[settings["fontSize"]] * editWidth)
 
 GuiControl, Hide, TextSection
 autoSize(hEdit, editWidth)
@@ -147,7 +148,7 @@ for key, value in defaultTemplates {
     Menu, LoadTemplateMenu, Add, %key%, TemplateMenuHandler
 }
 Menu, LoadTemplateMenu, Add
-for key, value in settings["templates"] {
+for key, value in userTemplates {
     Menu, LoadTemplateMenu, Add, %key%, CustomTemplateMenuHandler
     Menu, DeleteTemplateMenu, Add, %key%, DeleteTemplateHandler
 }
@@ -163,7 +164,7 @@ Return
 
 
 CustomTemplateMenuHandler:
-replaceText(hEdit, settings["templates"][A_ThisMenuItem])
+replaceText(hEdit, userTemplates[A_ThisMenuItem])
 Return
 
 
@@ -171,17 +172,17 @@ DeleteTemplateHandler:
 MsgBox, 1, Confirm deletion, Are you sure you want to delete template "%A_ThisMenuItem%"?
 IfMsgBox, Cancel
     Return
-settings["templates"].Delete(A_ThisMenuItem)
+userTemplates.Delete(A_ThisMenuItem)
 saveSettings()
 Gosub UpdateTemplateMenus
 Return
 
 
 FontMenuHandler:
-if (settings["settings"]["fontSize"] == A_ThisMenuItem) {
+if (settings["fontSize"] == A_ThisMenuItem) {
     Return
 }
-settings["settings"]["fontSize"] := A_ThisMenuItem
+settings["fontSize"] := A_ThisMenuItem
 saveSettings()
 Gosub InitGui
 Return
@@ -193,15 +194,15 @@ Menu, DateFormatMenu, DeleteAll
 for index, value in validDateFormats {
     tempFormat := todayToFormat(value)
     Menu, DateFormatMenu, Add, %tempFormat%, DateFormatMenuHandler
-    if (value == settings["settings"]["dateFormat"]) {
+    if (value == settings["dateFormat"]) {
         Menu, DateFormatMenu, Check, %tempFormat%
     }
 }
 Menu, DateFormatMenu, Add
-if (HasVal(validDateFormats, settings["settings"]["dateFormat"])) {
+if (HasVal(validDateFormats, settings["dateFormat"])) {
     Menu, DateFormatMenu, Add, Custom..., CustomDateFormat
 } else {
-    tempFormat := todayToFormat(settings["settings"]["dateFormat"])
+    tempFormat := todayToFormat(settings["dateFormat"])
     Menu, DateFormatMenu, Add, Custom: %tempFormat%, CustomDateFormat
     Menu, DateFormatMenu, Check, Custom: %tempFormat%
 }
@@ -209,7 +210,7 @@ Return
 
 
 DateFormatMenuHandler:
-settings["settings"]["dateFormat"] := validDateFormats[A_ThisMenuItemPos]
+settings["dateFormat"] := validDateFormats[A_ThisMenuItemPos]
 saveSettings()
 GoSub UpdateDateMenu
 Return
@@ -217,10 +218,10 @@ Return
 
 CustomDateFormat:
 Gui Main:+OwnDialogs
-dateFormat := settings["settings"]["dateFormat"]
+dateFormat := settings["dateFormat"]
 InputBox, tempFormat, Custom date format, Enter custom date format:, , , 150, , , , , %dateFormat%
 if (ErrorLevel == 0) {
-    settings["settings"]["dateFormat"] := tempFormat
+    settings["dateFormat"] := tempFormat
     saveSettings()
     GoSub UpdateDateMenu
 }
@@ -229,10 +230,10 @@ Return
 
 SetMnemonic:
 Gui Main:+OwnDialogs
-mnemonic := settings["settings"]["mnemonic"]
+mnemonic := settings["mnemonic"]
 InputBox, tempMnemonic, Set mnemonic, Enter your mnemonic (will be truncated to 4 characters):, , , 150, , , , , %mnemonic%
 if (ErrorLevel == 0) {
-    settings["settings"]["mnemonic"] := SubStr(tempMnemonic, 1, 4)
+    settings["mnemonic"] := SubStr(tempMnemonic, 1, 4)
     saveSettings()
 }
 Return
@@ -243,13 +244,13 @@ Gui Main:+OwnDialogs
 InputBox, templateName, Save template, Enter a name for your template (maximum 30 characters):, , , 150
 if (ErrorLevel == 0) {
     templateName := SubStr(templateName, 1, 30)
-    if (settings["templates"][templateName]) {
+    if (userTemplates[templateName]) {
         MsgBox, 1, Template exists, There is already a template with this name. Overwrite?
         IfMsgBox, Cancel
             Return
     }
     editText := Edit_GetText(hEdit)
-    settings["templates"][templateName] := Edit_Convert2Unix(editText)
+    userTemplates[templateName] := Edit_Convert2Unix(editText)
     saveSettings()
 }
 Gosub UpdateTemplateMenus
@@ -274,8 +275,8 @@ Return
 
 
 AddDate:
-FormatTime, output,, % settings["settings"]["dateFormat"]
-output := (settings["settings"]["mnemonic"]) ? (output " --" settings["settings"]["mnemonic"]) : output
+FormatTime, output,, % settings["dateFormat"]
+output := (settings["mnemonic"]) ? (output " --" settings["mnemonic"]) : output
 outLen := StrLen(output)
 Edit_GetSel(hEdit, cPos)
 rangeText := Edit_GetTextRange(hEdit, cPos, cPos+outLen)
@@ -319,12 +320,15 @@ Return
 ; =========
 
 readSettings() {
-    FileRead, strSettings, %settingsFile%
-    settings := JSON.Load(strSettings)
+    FileRead, tempConfig, %settingsFile%
+    config := JSON.Load(tempConfig)
 
-    setDefault(settings["settings"], "mnemonic", "")
-    setDefault(settings["settings"], "fontSize", 12)
-    setDefault(settings["settings"], "dateFormat", "dd MMM yyyy")
+    settings := config["settings"]
+    userTemplates := config["templates"]
+
+    setDefault(settings, "mnemonic", "")
+    setDefault(settings, "fontSize", 12)
+    setDefault(settings, "dateFormat", "dd MMM yyyy")
     saveSettings()
 
     fetchDefaultTemplates()
@@ -332,7 +336,8 @@ readSettings() {
 
 
 saveSettings() {
-    json_out := JSON.Dump(settings, "", 4)
+    configObject := {"settings": settings, "templates": userTemplates}
+    json_out := JSON.Dump(configObject, "", 4)
     try {
         FileDelete, %settingsFile%
     }
