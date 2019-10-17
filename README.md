@@ -36,7 +36,7 @@ Alternatively, you can use the shortcut <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>V</
 * **Font size** – Changes the text size of the entire program
 * **Date format** – Changes the format used by the Insert Date command
 
-Settings are stored in `keywords_editor.ini` which resides in the same folder as the executable. 
+Settings are stored in `keywords_editor.json` which resides in the same folder as the executable. 
 
 ---
 
