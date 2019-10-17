@@ -17,22 +17,23 @@
 
 CoordMode, Mouse, Screen
 
-global settingsFile := RegexReplace(A_ScriptName, "\.[^.]+$", "") ".ini"
+global settingsFile := RegexReplace(A_ScriptName, "\.[^.]+$", "") ".json"
 global savedFile := A_ScriptDir . "/~saved_keywords.txt"
 global fSizes := {10: 7, 11: 8, 12: 9, 14: 10}
 global validDateFormats := ["dd MMM yyyy", "MMM dd, yyyy", "MM/dd/yyyy", "yyyy/MM/dd"]
 global templateUrl := "https://gist.githubusercontent.com/bhughes339/31b6f3f2b9cbf669d62f498208b27a52/raw/keyword_templates.txt"
 global registryKey := "HKCU\Software\Keywords Editor\Templates"
-global templates := {}
-global userTemplates := {}
+global settings := {}
+global userTemplates = {}
+global defaultTemplates := {}
 global editWidth := 80
-global fontSize, mnemonic, dateFormat
 
 readSettings()
 Gosub InitGui
 loadSavedKeywords(hEdit)
 
 #IfWinActive ahk_group KeywordsEditor
+
 ; Add any program-specific hotkeys here
 ^Backspace::Send ^+{Left}{Backspace}
 ^+Backspace::Send +{Home}{Backspace}
@@ -41,9 +42,10 @@ loadSavedKeywords(hEdit)
 
 Return
 
-; =======
-; Hotkeys
-; =======
+
+; ==============
+; Global Hotkeys
+; ==============
 
 !+v::
 fText := Edit_Convert2Unix(getFormattedText(hEdit))
@@ -62,6 +64,7 @@ Loop, Parse, fText, `n
 SendInput {Ins}================================================================================{Down}{Ins}{Space}
 Return
 
+
 ; ===========
 ; Subroutines
 ; ===========
@@ -71,6 +74,7 @@ savedText := Edit_GetText(hEdit)
 Gui, Main:New, HwndMainHwnd, Keywords Editor
 Gui, Main:+Resize +MinSize +MinSizex100
 Gui, Margin, 10, 10
+fontSize := settings["fontSize"]
 Gui, Font, s%fontSize% norm, Consolas
 
 ; -- File
@@ -101,7 +105,7 @@ Menu, FontMenu, Add
 Menu, FontMenu, DeleteAll
 for key, value in fSizes {
     Menu, FontMenu, Add, %key%, FontMenuHandler
-    if (key == fontSize) {
+    if (key == settings["fontSize"]) {
         Menu, FontMenu, Check, %key%
     }
 }
@@ -116,7 +120,7 @@ Menu, MenuBar, Add, Actions, :ActionMenu
 Menu, MenuBar, Add, Options, :OptionsMenu
 Gui, Menu, MenuBar
 
-Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[fontSize] * editWidth)
+Gui, Add, Edit, % "xm r30 vTextSection HwndhEdit gTextSection w" (fSizes[settings["fontSize"]] * editWidth)
 
 GuiControl, Hide, TextSection
 autoSize(hEdit, editWidth)
@@ -129,132 +133,15 @@ Edit_SetText(hEdit, savedText)
 GroupAdd, KeywordsEditor, ahk_id %MainHwnd%
 Return
 
+
 ; ===========
 ; Subroutines
 ; ===========
 
-TextSection:
-Edit_WriteFile(hEdit, savedFile)
-Return
-
-
-UpdateTemplateMenus:
-Menu, LoadTemplateMenu, Add
-Menu, LoadTemplateMenu, DeleteAll
-Menu, DeleteTemplateMenu, Add
-Menu, DeleteTemplateMenu, DeleteAll
-for key, value in templates {
-    Menu, LoadTemplateMenu, Add, %key%, TemplateMenuHandler
-}
-Menu, LoadTemplateMenu, Add
-for key, value in userTemplates {
-    Menu, LoadTemplateMenu, Add, %key%, CustomTemplateMenuHandler
-    Menu, DeleteTemplateMenu, Add, %key%, DeleteTemplateHandler
-}
-Return
-
-; =============
-; Menu Handlers
-; =============
-
-TemplateMenuHandler:
-replaceText(hEdit, templates[A_ThisMenuItem])
-Return
-
-
-CustomTemplateMenuHandler:
-replaceText(hEdit, userTemplates[A_ThisMenuItem])
-Return
-
-
-DeleteTemplateHandler:
-MsgBox, 1, Confirm deletion, Are you sure you want to delete template "%A_ThisMenuItem%"?
-IfMsgBox, Cancel
-    Return
-userTemplates.Delete(A_ThisMenuItem)
-IniDelete, %settingsFile%, Templates, %A_ThisMenuItem%
-Gosub UpdateTemplateMenus
-Return
-
-
-FontMenuHandler:
-if (fontSize == A_ThisMenuItem) {
-    Return
-}
-fontSize := A_ThisMenuItem
-IniWrite, %fontSize%, %settingsFile%, Settings, fontsize
-Gosub InitGui
-Return
-
-
-UpdateDateMenu:
-Menu, DateFormatMenu, Add
-Menu, DateFormatMenu, DeleteAll
-for index, value in validDateFormats {
-    tempFormat := todayToFormat(value)
-    Menu, DateFormatMenu, Add, %tempFormat%, DateFormatMenuHandler
-    if (value == dateFormat) {
-        Menu, DateFormatMenu, Check, %tempFormat%
-    }
-}
-Menu, DateFormatMenu, Add
-if (HasVal(validDateFormats, dateFormat)) {
-    Menu, DateFormatMenu, Add, Custom..., CustomDateFormat
-} else {
-    tempFormat := todayToFormat(dateFormat)
-    Menu, DateFormatMenu, Add, Custom: %tempFormat%, CustomDateFormat
-    Menu, DateFormatMenu, Check, Custom: %tempFormat%
-}
-Return
-
-
-DateFormatMenuHandler:
-dateFormat := validDateFormats[A_ThisMenuItemPos]
-IniWrite, %dateFormat%, %settingsFile%, Settings, dateFormat
-GoSub UpdateDateMenu
-Return
-
-
-CustomDateFormat:
-Gui Main:+OwnDialogs
-InputBox, tempFormat, Custom date format, Enter custom date format:, , , 150, , , , , %dateFormat%
-if (ErrorLevel == 0) {
-    dateFormat := tempFormat
-    IniWrite, %dateFormat%, %settingsFile%, Settings, dateFormat
-    GoSub UpdateDateMenu
-}
-Return
-
-
-SetMnemonic:
-Gui Main:+OwnDialogs
-InputBox, tempMnemonic, Set mnemonic, Enter your mnemonic (will be truncated to 4 characters):, , , 150, , , , , %mnemonic%
-if (ErrorLevel == 0) {
-    mnemonic := SubStr(tempMnemonic, 1, 4)
-    IniWrite, %mnemonic%, %settingsFile%, Settings, mnemonic
-}
-Return
-
-
-SaveTemplate:
-Gui Main:+OwnDialogs
-InputBox, templateName, Save template, Enter a name for your template (maximum 30 characters):, , , 150
-if (ErrorLevel == 0) {
-    templateName := SubStr(templateName, 1, 30)
-    ; Replace "=" because of INI format
-    templateName := RegExReplace(templateName, "=", "_")
-    IniRead, existing, %settingsFile%, Templates, %templateName%, %A_Space%
-    if (existing || userTemplates[templateName]) {
-        MsgBox, 1, Template exists, There is already a template with this name. Overwrite?
-        IfMsgBox, Cancel
-            Return
-    }
-    editText := Edit_GetText(hEdit)
-    userTemplates[templateName] := editText
-    escapedText := escapeNewlines(Edit_Convert2Unix(editText))
-    IniWrite, %escapedText%, %settingsFile%, Templates, %templateName%
-}
-Gosub UpdateTemplateMenus
+MainButtonCancel:
+MainGuiClose:
+FileDelete, %savedFile%
+ExitApp
 Return
 
 
@@ -263,10 +150,8 @@ GuiControl, Move, TextSection, % "h" (A_GuiHeight - 20)
 Return
 
 
-MainButtonCancel:
-MainGuiClose:
-FileDelete, %savedFile%
-ExitApp
+TextSection:
+Edit_WriteFile(hEdit, savedFile)
 Return
 
 
@@ -276,8 +161,8 @@ Return
 
 
 AddDate:
-FormatTime, output,, %dateFormat%
-output := (mnemonic) ? (output " --" mnemonic) : output
+FormatTime, output,, % settings["dateFormat"]
+output := (settings["mnemonic"]) ? (output " --" settings["mnemonic"]) : output
 outLen := StrLen(output)
 Edit_GetSel(hEdit, cPos)
 rangeText := Edit_GetTextRange(hEdit, cPos, cPos+outLen)
@@ -316,31 +201,152 @@ Edit_WriteFile(hEdit, savedFile)
 Return
 
 
+; =============
+; Menu Handlers
+; =============
+
+UpdateTemplateMenus:
+Menu, LoadTemplateMenu, Add
+Menu, LoadTemplateMenu, DeleteAll
+Menu, DeleteTemplateMenu, Add
+Menu, DeleteTemplateMenu, DeleteAll
+for key, value in defaultTemplates {
+    Menu, LoadTemplateMenu, Add, %key%, TemplateMenuHandler
+}
+Menu, LoadTemplateMenu, Add
+for key, value in userTemplates {
+    Menu, LoadTemplateMenu, Add, %key%, CustomTemplateMenuHandler
+    Menu, DeleteTemplateMenu, Add, %key%, DeleteTemplateHandler
+}
+Return
+
+
+TemplateMenuHandler:
+replaceText(hEdit, defaultTemplates[A_ThisMenuItem])
+Return
+
+
+CustomTemplateMenuHandler:
+replaceText(hEdit, userTemplates[A_ThisMenuItem])
+Return
+
+
+DeleteTemplateHandler:
+MsgBox, 1, Confirm deletion, Are you sure you want to delete template "%A_ThisMenuItem%"?
+IfMsgBox, Cancel
+    Return
+userTemplates.Delete(A_ThisMenuItem)
+saveSettings()
+Gosub UpdateTemplateMenus
+Return
+
+
+FontMenuHandler:
+if (settings["fontSize"] == A_ThisMenuItem) {
+    Return
+}
+settings["fontSize"] := A_ThisMenuItem
+saveSettings()
+Gosub InitGui
+Return
+
+
+UpdateDateMenu:
+Menu, DateFormatMenu, Add
+Menu, DateFormatMenu, DeleteAll
+for index, value in validDateFormats {
+    tempFormat := todayToFormat(value)
+    Menu, DateFormatMenu, Add, %tempFormat%, DateFormatMenuHandler
+    if (value == settings["dateFormat"]) {
+        Menu, DateFormatMenu, Check, %tempFormat%
+    }
+}
+Menu, DateFormatMenu, Add
+if (HasVal(validDateFormats, settings["dateFormat"])) {
+    Menu, DateFormatMenu, Add, Custom..., CustomDateFormat
+} else {
+    tempFormat := todayToFormat(settings["dateFormat"])
+    Menu, DateFormatMenu, Add, Custom: %tempFormat%, CustomDateFormat
+    Menu, DateFormatMenu, Check, Custom: %tempFormat%
+}
+Return
+
+
+DateFormatMenuHandler:
+settings["dateFormat"] := validDateFormats[A_ThisMenuItemPos]
+saveSettings()
+GoSub UpdateDateMenu
+Return
+
+
+CustomDateFormat:
+Gui Main:+OwnDialogs
+dateFormat := settings["dateFormat"]
+InputBox, tempFormat, Custom date format, Enter custom date format:, , , 150, , , , , %dateFormat%
+if (ErrorLevel == 0) {
+    settings["dateFormat"] := tempFormat
+    saveSettings()
+    GoSub UpdateDateMenu
+}
+Return
+
+
+SetMnemonic:
+Gui Main:+OwnDialogs
+mnemonic := settings["mnemonic"]
+InputBox, tempMnemonic, Set mnemonic, Enter your mnemonic (will be truncated to 4 characters):, , , 150, , , , , %mnemonic%
+if (ErrorLevel == 0) {
+    settings["mnemonic"] := SubStr(tempMnemonic, 1, 4)
+    saveSettings()
+}
+Return
+
+
+SaveTemplate:
+Gui Main:+OwnDialogs
+InputBox, templateName, Save template, Enter a name for your template (maximum 30 characters):, , , 150
+if (ErrorLevel == 0) {
+    templateName := SubStr(templateName, 1, 30)
+    if (userTemplates[templateName]) {
+        MsgBox, 1, Template exists, There is already a template with this name. Overwrite?
+        IfMsgBox, Cancel
+            Return
+    }
+    editText := Edit_GetText(hEdit)
+    userTemplates[templateName] := Edit_Convert2Unix(editText)
+    saveSettings()
+}
+Gosub UpdateTemplateMenus
+Return
+
+
 ; =========
 ; Functions
 ; =========
 
 readSettings() {
-    ; Read from keywords_editor.ini and set default settings
-    IniRead, iniMnemonic, %settingsFile%, Settings, mnemonic, %A_Space%
-    mnemonic := SubStr(iniMnemonic, 1, 4)
+    FileRead, tempConfig, %settingsFile%
+    config := JSON.Load(tempConfig)
 
-    IniRead, iniFontSize, %settingsFile%, Settings, fontsize, %A_Space%
-    fontSize := (fSizes[iniFontSize]) ? iniFontSize : 12
+    settings := config["settings"]
+    userTemplates := config["templates"]
 
-    IniRead, dateFormat, %settingsFile%, Settings, dateformat, "dd MMM yyyy"
-
-    IniRead, outSection, %settingsFile%, Templates
-    outSection := Edit_Convert2Unix(outSection)
-    Loop, Parse, outSection, "`n"
-    {
-        matchPos := RegExMatch(A_LoopField, "^(.+?)=(.+)", match)
-        if (matchPos) {
-            userTemplates[match1] := RegExReplace(match2, "\\n", "`n")
-        }
-    }
+    setDefault(settings, "mnemonic", "")
+    setDefault(settings, "fontSize", 12)
+    setDefault(settings, "dateFormat", "dd MMM yyyy")
+    saveSettings()
 
     fetchDefaultTemplates()
+}
+
+
+saveSettings() {
+    configObject := {"settings": settings, "templates": userTemplates}
+    json_out := JSON.Dump(configObject, "", 4)
+    try {
+        FileDelete, %settingsFile%
+    }
+    FileAppend, %json_out%, %settingsFile%
 }
 
 
@@ -443,7 +449,14 @@ fetchDefaultTemplates() {
     Loop, Reg, %registryKey%
     {
         RegRead, value
-        templates[A_LoopRegName] := RegExReplace(value, "\\n", "`n")
+        defaultTemplates[A_LoopRegName] := RegExReplace(value, "\\n", "`n")
+    }
+}
+
+
+setDefault(ByRef object, key, defaultVal) {
+    if !(object[key]) {
+        object[key] := defaultVal
     }
 }
 
@@ -462,3 +475,4 @@ HasVal(haystack, needle) {
 ; https://www.autohotkey.com/boards/viewtopic.php?f=6&t=5063
 #include %A_ScriptDir%\Edit\_Functions
 #include Edit.ahk
+#include %A_ScriptDir%\AutoHotkey-JSON\JSON.ahk
