@@ -187,7 +187,8 @@ Return
 DeleteLine:
 char := Edit_LineIndex(hEdit)
 len := Edit_LineLength(hEdit)
-Edit_SetSel(hEdit, char, char + Edit_LineLength(hEdit) + 1)
+; Line length + `r`n
+Edit_SetSel(hEdit, char, char + Edit_LineLength(hEdit) + 2)
 Edit_Clear(hEdit)
 Return
 
