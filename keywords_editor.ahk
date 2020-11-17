@@ -329,8 +329,13 @@ readSettings() {
     FileRead, tempConfig, %settingsFile%
     config := JSON.Load(tempConfig)
 
-    settings := config["settings"]
-    userTemplates := config["templates"]
+    if (IsObject(config["settings"])) {
+        settings := config["settings"]
+    }
+    
+    if (IsObject(config["templates"])) {
+        userTemplates := config["templates"]
+    }
 
     setDefault(settings, "mnemonic", "")
     setDefault(settings, "fontSize", 12)
